@@ -16,27 +16,29 @@ jobs:
       - name: Deploy Docker container
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM_IP: ${{ secrets.VM_IP }}
+          VM_USER: ${{ secrets.VM_USER }}
         run: |
           # Save the private key
           echo "$SSH_PRIVATE_KEY" > key.pem
           chmod 600 key.pem
 
-          # Copy repo from runner to VM (into Downloads/CLASS-TASK2)
-          scp -i key.pem -o StrictHostKeyChecking=no -r . hamza@10.0.2.15:/home/hamza/Downloads/CLASS-TASK2
+          # Copy repo from runner to VM
+          scp -i key.pem -o StrictHostKeyChecking=no -r . $VM_USER@$VM_IP:/home/$VM_USER/Downloads/CLASS-TASK2
 
           # SSH into VM and deploy Docker
-          ssh -i key.pem -o StrictHostKeyChecking=no hamza@10.0.2.15 << 'EOF'
+          ssh -i key.pem -o StrictHostKeyChecking=no $VM_USER@$VM_IP << EOF
             set -e
 
-            cd /home/hamza/Downloads/CLASS-TASK2
+            cd /home/$VM_USER/Downloads/CLASS-TASK2
 
             echo "Stopping any running container..."
-            if [ "$(docker ps -q -f name=class-task2-container)" ]; then
+            if [ "\$(docker ps -q -f name=class-task2-container)" ]; then
               docker stop class-task2-container
             fi
 
             echo "Removing any existing container..."
-            if [ "$(docker ps -a -q -f name=class-task2-container)" ]; then
+            if [ "\$(docker ps -a -q -f name=class-task2-container)" ]; then
               docker rm class-task2-container
             fi
 
